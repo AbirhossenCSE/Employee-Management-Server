@@ -34,6 +34,19 @@ async function run() {
 
     const serviceCollection = client.db('employee-management').collection('services')
     const reviewCollection = client.db('employee-management').collection('reviews')
+    const userCollection = client.db('employee-management').collection('users')
+
+    // users related Api
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: 'user already exists', insertedId: null })
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
 
     // services related API
     app.get('/services', async (req, res) => {
