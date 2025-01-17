@@ -33,10 +33,17 @@ async function run() {
     await client.connect();
 
     const serviceCollection = client.db('employee-management').collection('services')
+    const reviewCollection = client.db('employee-management').collection('reviews')
 
     // services related API
     app.get('/services', async (req, res) => {
       const result = await serviceCollection.find().toArray();
+      res.send(result);
+    })
+    
+    // review related API
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewCollection.find().toArray();
       res.send(result);
     })
 
