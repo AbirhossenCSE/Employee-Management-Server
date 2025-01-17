@@ -35,6 +35,7 @@ async function run() {
     const serviceCollection = client.db('employee-management').collection('services')
     const reviewCollection = client.db('employee-management').collection('reviews')
     const userCollection = client.db('employee-management').collection('users')
+    const messagesCollection = client.db('employee-management').collection('messages')
 
     // users related Api
     app.post('/users', async (req, res) => {
@@ -53,12 +54,26 @@ async function run() {
       const result = await serviceCollection.find().toArray();
       res.send(result);
     })
-    
+
     // review related API
     app.get('/reviews', async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     })
+
+    // contact us post
+    app.post('/contact-us', async (req, res) => {
+      const { name, email, message } = req.body;
+      const newMessage = {
+        name,
+        email,
+        message,
+        date: new Date(),
+      };
+      const result = await messagesCollection.insertOne(newMessage);
+      res.send(result);
+    });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -72,9 +87,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Employee is running')
-  })
-  app.listen(port, () => {
-    console.log(`Employee is running on port ${port}`);
-  
-  })
+  res.send('Employee is running')
+})
+app.listen(port, () => {
+  console.log(`Employee is running on port ${port}`);
+
+})
