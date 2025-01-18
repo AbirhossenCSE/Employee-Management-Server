@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 
+// jwt-1
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const port = process.env.PORT || 5000;
@@ -37,6 +39,14 @@ async function run() {
     const userCollection = client.db('employee-management').collection('users')
     const messagesCollection = client.db('employee-management').collection('messages')
 
+
+    // jwt related API---- JWT-2
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      res.send({ token });
+    })
+
     // users related Api
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -52,6 +62,7 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     })
+
     // make admin
     app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
@@ -64,6 +75,35 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
+
+    app.get('/users/admin/:email', async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'unauthorised access' })
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let admin = false;
+      if (user) {
+        admin = user?.role === 'admin';
+
+      }
+      res.send({ admin })
+    })
+
+    // Fire employee
+    app.patch('/users/fire/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: 'fired' // Set a new field `status` to "fired"
+        }
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
 
     // services related API
     app.get('/services', async (req, res) => {
