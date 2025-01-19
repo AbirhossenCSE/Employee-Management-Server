@@ -38,6 +38,7 @@ async function run() {
     const reviewCollection = client.db('employee-management').collection('reviews')
     const userCollection = client.db('employee-management').collection('users')
     const messagesCollection = client.db('employee-management').collection('messages')
+    const tasksCollection = client.db('employee-management').collection('tasks')
 
 
     // jwt related API---- JWT-2
@@ -113,12 +114,36 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
         $set: {
-          status: 'fired' // Set a new field `status` to "fired"
+          status: 'fired'
         }
       };
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
+
+    // Employee
+    // Fetch all work data for logged-in user
+    app.get("/tasks", async (req, res) => {
+      const email = req.query.email;
+      const tasks = await tasksCollection.find({ email }).toArray();
+      res.send(tasks);
+    });
+    
+    // Add new work
+    app.post("/tasks", async (req, res) => {
+      const task = req.body;
+      const result = await tasksCollection.insertOne(task);
+      res.send(result);
+    });
+    
+    // Delete work by ID
+    app.delete('/tasks/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await workCollection.deleteOne(filter);
+      res.send(result);
+    });
+
 
 
     // services related API
