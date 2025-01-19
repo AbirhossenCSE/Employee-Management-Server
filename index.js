@@ -92,6 +92,23 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
+    // get by user role
+    app.get("/users/role/:email", async (req, res) => {
+      const email = req.params.email;
+
+      try {
+        const user = await userCollection.findOne({ email });
+        if (user) {
+          res.send({ role: user.role }); 
+        } else {
+          res.status(404).send({ message: "User not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error retrieving user role" });
+      }
+    });
+
 
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
@@ -147,22 +164,44 @@ async function run() {
     app.put("/tasks/:id", async (req, res) => {
       const id = req.params.id;
       const { _id, ...updatedTask } = req.body;
-  
+
       try {
-          const filter = { _id: new ObjectId(id) };
-          const updateDoc = { $set: updatedTask };
-          const result = await tasksCollection.updateOne(filter, updateDoc);  
-          if (result.modifiedCount > 0) {
-              res.status(200).send({ message: "Task updated successfully." });
-          } else {
-              res.status(404).send({ message: "Task not found or no changes made." });
-          }
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = { $set: updatedTask };
+        const result = await tasksCollection.updateOne(filter, updateDoc);
+        if (result.modifiedCount > 0) {
+          res.status(200).send({ message: "Task updated successfully." });
+        } else {
+          res.status(404).send({ message: "Task not found or no changes made." });
+        }
       } catch (error) {
-          console.error("Error updating task:", error);
-          res.status(500).send({ message: "Failed to update task." });
+        console.error("Error updating task:", error);
+        res.status(500).send({ message: "Failed to update task." });
+      }
+    });
+
+    // hr
+    app.patch("/users/verify/:id", async (req, res) => {
+      const { id } = req.params; 
+      try {
+          const employee = await userCollection.findOne({ _id: new ObjectId(id) });
+          if (!employee) {
+              return res.status(404).send({ message: "Employee not found" });
+          }
+  
+          const updated = await userCollection.updateOne(
+              { _id: new ObjectId(id) },
+              { $set: { verified: !employee.verified } }
+          );
+  
+          res.send({ success: true, verified: !employee.verified });
+      } catch (error) {
+          console.error(error);
+          res.status(500).send({ message: "Error updating verification status" });
       }
   });
   
+
 
 
     // services related API
