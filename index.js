@@ -128,22 +128,41 @@ async function run() {
       const tasks = await tasksCollection.find({ email }).toArray();
       res.send(tasks);
     });
-    
+
     // Add new work
     app.post("/tasks", async (req, res) => {
       const task = req.body;
       const result = await tasksCollection.insertOne(task);
       res.send(result);
     });
-    
+
     // Delete work by ID
     app.delete('/tasks/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const result = await workCollection.deleteOne(filter);
+      const result = await tasksCollection.deleteOne(filter);
       res.send(result);
     });
 
+    app.put("/tasks/:id", async (req, res) => {
+      const id = req.params.id;
+      const { _id, ...updatedTask } = req.body;
+  
+      try {
+          const filter = { _id: new ObjectId(id) };
+          const updateDoc = { $set: updatedTask };
+          const result = await tasksCollection.updateOne(filter, updateDoc);  
+          if (result.modifiedCount > 0) {
+              res.status(200).send({ message: "Task updated successfully." });
+          } else {
+              res.status(404).send({ message: "Task not found or no changes made." });
+          }
+      } catch (error) {
+          console.error("Error updating task:", error);
+          res.status(500).send({ message: "Failed to update task." });
+      }
+  });
+  
 
 
     // services related API
