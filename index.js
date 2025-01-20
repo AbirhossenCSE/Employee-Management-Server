@@ -6,6 +6,9 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000;
 
 
@@ -90,6 +93,7 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
+    // admin
     // make hr
     app.patch('/users/hr/:id', async (req, res) => {
       const id = req.params.id;
@@ -124,6 +128,36 @@ async function run() {
         res.status(400).send({ message: "Failed to update salary" });
       }
     });
+    // admin payment
+    app.get("/users/payable", async (req, res) => {
+      try {
+        const users = await userCollection.find({ payable: true }).toArray();
+        res.send(users);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error fetching payable users" });
+      }
+    });
+
+    // /create-payment-intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const { amount } = req.body;
+
+      try {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount, // Amount in cents
+          currency: "usd",
+        });
+
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to create payment intent" });
+      }
+    });
+
 
     // get by user role
     app.get("/users/role/:email", async (req, res) => {
@@ -181,14 +215,6 @@ async function run() {
       res.send(tasks);
     });
 
-    // app.get('/users/role/:email', async (req, res) => {
-    //   const email = req.params.email;
-    //   const user = await userCollection.findOne({ email });
-    //   if (!user) {
-    //     return res.status(404).send({ error: 'User not found.' });
-    //   }
-    //   res.send({ role: user.role });
-    // });
 
     app.post('/tasks', async (req, res) => {
       const task = req.body;
@@ -247,10 +273,26 @@ async function run() {
         res.status(500).send({ message: "Error updating verification status" });
       }
     });
+
     app.get("/allWorkRecords", async (req, res) => {
       const tasks = await tasksCollection.find().toArray();
       res.send(tasks);
     });
+
+    app.patch("/users/payable/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const updated = await userCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { payable: true } }
+        );
+        res.send({ success: true });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error marking employee as payable" });
+      }
+    });
+
 
 
     // services related API
