@@ -8,8 +8,6 @@ require('dotenv').config();
 
 const port = process.env.PORT || 5000;
 
-// employee-management
-// 5Ilu3j0Vjcxu7SZX
 
 // midleware
 app.use(cors());
@@ -99,7 +97,7 @@ async function run() {
       try {
         const user = await userCollection.findOne({ email });
         if (user) {
-          res.send({ role: user.role }); 
+          res.send({ role: user.role });
         } else {
           res.status(404).send({ message: "User not found" });
         }
@@ -139,16 +137,29 @@ async function run() {
     });
 
     // Employee
-    // Fetch all work data for logged-in user
-    app.get("/tasks", async (req, res) => {
+    app.get('/tasks', async (req, res) => {
       const email = req.query.email;
+      if (!email) {
+        return res.status(400).send({ error: 'Email query parameter is required.' });
+      }
       const tasks = await tasksCollection.find({ email }).toArray();
       res.send(tasks);
     });
 
-    // Add new work
-    app.post("/tasks", async (req, res) => {
+    // app.get('/users/role/:email', async (req, res) => {
+    //   const email = req.params.email;
+    //   const user = await userCollection.findOne({ email });
+    //   if (!user) {
+    //     return res.status(404).send({ error: 'User not found.' });
+    //   }
+    //   res.send({ role: user.role });
+    // });
+
+    app.post('/tasks', async (req, res) => {
       const task = req.body;
+      if (!task || !task.email || !task.task || !task.date) {
+        return res.status(400).send({ error: 'Invalid task data.' });
+      }
       const result = await tasksCollection.insertOne(task);
       res.send(result);
     });
@@ -180,28 +191,31 @@ async function run() {
       }
     });
 
+
     // hr
     app.patch("/users/verify/:id", async (req, res) => {
-      const { id } = req.params; 
+      const { id } = req.params;
       try {
-          const employee = await userCollection.findOne({ _id: new ObjectId(id) });
-          if (!employee) {
-              return res.status(404).send({ message: "Employee not found" });
-          }
-  
-          const updated = await userCollection.updateOne(
-              { _id: new ObjectId(id) },
-              { $set: { verified: !employee.verified } }
-          );
-  
-          res.send({ success: true, verified: !employee.verified });
-      } catch (error) {
-          console.error(error);
-          res.status(500).send({ message: "Error updating verification status" });
-      }
-  });
-  
+        const employee = await userCollection.findOne({ _id: new ObjectId(id) });
+        if (!employee) {
+          return res.status(404).send({ message: "Employee not found" });
+        }
 
+        const updated = await userCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { verified: !employee.verified } }
+        );
+
+        res.send({ success: true, verified: !employee.verified });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error updating verification status" });
+      }
+    });
+    app.get("/allWorkRecords", async (req, res) => {
+      const tasks = await tasksCollection.find().toArray();
+      res.send(tasks);
+    });
 
 
     // services related API
