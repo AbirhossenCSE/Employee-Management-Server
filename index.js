@@ -40,6 +40,7 @@ async function run() {
     const userCollection = client.db('employee-management').collection('users')
     const messagesCollection = client.db('employee-management').collection('messages')
     const tasksCollection = client.db('employee-management').collection('tasks')
+    const paymentCollection = client.db('employee-management').collection('payment')
 
 
     // jwt related API---- JWT-2
@@ -139,30 +140,51 @@ async function run() {
       }
     });
 
-    // /create-payment-intent
-    app.post("/create-payment-intent", async (req, res) => {
+    // API: Create Payment Intent
+    app.post('/create-payment-intent', async (req, res) => {
       const { amount } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).send({ message: 'Invalid amount' });
+      }
 
       try {
         const paymentIntent = await stripe.paymentIntents.create({
-          amount, // Amount in cents
-          currency: "usd",
+          amount, // Amount should be in the smallest currency unit (e.g., cents for USD)
+          currency: 'usd',
         });
-
-        res.send({
-          clientSecret: paymentIntent.client_secret,
-        });
+        res.send({ clientSecret: paymentIntent.client_secret });
       } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "Failed to create payment intent" });
+        console.error('Error creating PaymentIntent:', error.message);
+        res.status(500).send({ message: 'Failed to create PaymentIntent' });
       }
     });
+
+    app.post("/payments", async (req, res) => {
+      const { transactionId, paidAmount, employeeName, employeeEmail } = req.body;
+      if (!transactionId || !paidAmount || !employeeName || !employeeEmail) {
+        return res.status(400).send({ message: "Required fields are missing." });
+      }
+      if (typeof paidAmount !== "number" || typeof transactionId !== "string") {
+        return res.status(400).send({ message: "Invalid data types." });
+      }
+      const paymentData = {
+        transactionId,
+        paidAmount,
+        employeeName,
+        employeeEmail,
+        paymentDate: new Date(),  // Optional: Save the date of the payment
+      };
+      const result = await paymentCollection.insertOne(paymentData);
+      res.send(result);
+    });
+
+
 
 
     // get by user role
     app.get("/users/role/:email", async (req, res) => {
       const email = req.params.email;
-
       try {
         const user = await userCollection.findOne({ email });
         if (user) {
@@ -175,7 +197,6 @@ async function run() {
         res.status(500).send({ message: "Error retrieving user role" });
       }
     });
-
 
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
