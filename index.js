@@ -90,6 +90,41 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
+    // make hr
+    app.patch('/users/hr/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: 'HR'
+        }
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+    // Update user salary
+    app.patch('/users/salary/:id', async (req, res) => {
+      const { id } = req.params;
+      const { salary } = req.body;
+
+      if (!salary) {
+        return res.status(400).send({ message: "Salary is required" });
+      }
+
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: { salary }
+      };
+
+      const result = await userCollection.updateOne(filter, updatedDoc);
+
+      if (result.modifiedCount > 0) {
+        res.send({ message: "Salary updated successfully" });
+      } else {
+        res.status(400).send({ message: "Failed to update salary" });
+      }
+    });
+
     // get by user role
     app.get("/users/role/:email", async (req, res) => {
       const email = req.params.email;
