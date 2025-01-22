@@ -82,6 +82,15 @@ async function run() {
       res.send(result);
     })
 
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email });
+      if (!user) {
+        return res.status(404).send({ message: 'User not found' });
+      }
+      res.send(user);
+    });
+
     // make admin
     app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
