@@ -143,14 +143,12 @@ async function run() {
     // API: Create Payment Intent
     app.post('/create-payment-intent', async (req, res) => {
       const { amount } = req.body;
-
       if (!amount || amount <= 0) {
         return res.status(400).send({ message: 'Invalid amount' });
       }
-
       try {
         const paymentIntent = await stripe.paymentIntents.create({
-          amount, // Amount should be in the smallest currency unit (e.g., cents for USD)
+          amount, 
           currency: 'usd',
         });
         res.send({ clientSecret: paymentIntent.client_secret });
@@ -173,11 +171,41 @@ async function run() {
         paidAmount,
         employeeName,
         employeeEmail,
-        paymentDate: new Date(),  // Optional: Save the date of the payment
+        paymentDate: new Date(), 
       };
       const result = await paymentCollection.insertOne(paymentData);
       res.send(result);
     });
+
+
+    app.get("/payment-history", async (req, res) => {
+      const { email, page = 0, limit = 5 } = req.query;
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      try {
+        const query = { employeeEmail: email };
+        const payments = await paymentCollection.find(query).skip(pageNumber * limitNumber).limit(limitNumber).toArray();
+
+        const enrichedPayments = payments.map((payment) => {
+          const paymentDate = new Date(payment.paymentDate);
+          return {
+            ...payment,
+            month: paymentDate.toLocaleString("default", { month: "long" }),
+            year: paymentDate.getFullYear(),
+          };
+        });
+        const totalRecords = await paymentCollection.countDocuments(query);
+        const totalPages = Math.ceil(totalRecords / limitNumber);
+        res.send({
+          payments: enrichedPayments,
+          totalPages,
+        });
+      } catch (error) {
+        console.error("Error fetching payment history:", error);
+        res.status(500).send({ message: "Internal server error." });
+      }
+    });
+
 
 
 
