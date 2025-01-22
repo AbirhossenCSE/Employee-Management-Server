@@ -33,7 +33,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const serviceCollection = client.db('employee-management').collection('services')
     const reviewCollection = client.db('employee-management').collection('reviews')
@@ -82,6 +82,12 @@ async function run() {
       res.send(result);
     })
 
+    // admin payment
+    app.get("/users/payable", async (req, res) => {
+      const users = await userCollection.find({ payable: true }).toArray();
+      res.send(users);
+    });
+    
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email });
@@ -138,16 +144,8 @@ async function run() {
         res.status(400).send({ message: "Failed to update salary" });
       }
     });
-    // admin payment
-    app.get("/users/payable", async (req, res) => {
-      try {
-        const users = await userCollection.find({ payable: true }).toArray();
-        res.send(users);
-      } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "Error fetching payable users" });
-      }
-    });
+    
+    
 
     app.get("/employees/:id", async (req, res) => {
       const { id } = req.params;
@@ -390,8 +388,8 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
