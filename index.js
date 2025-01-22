@@ -140,6 +140,16 @@ async function run() {
       }
     });
 
+    app.get("/employees/:id", async (req, res) => {
+      const { id } = req.params;
+      const employee = await userCollection.findOne({ _id: new ObjectId(id) });
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+      res.json(employee);
+    });
+
+
     // API: Create Payment Intent
     app.post('/create-payment-intent', async (req, res) => {
       const { amount } = req.body;
@@ -148,7 +158,7 @@ async function run() {
       }
       try {
         const paymentIntent = await stripe.paymentIntents.create({
-          amount, 
+          amount,
           currency: 'usd',
         });
         res.send({ clientSecret: paymentIntent.client_secret });
@@ -171,7 +181,7 @@ async function run() {
         paidAmount,
         employeeName,
         employeeEmail,
-        paymentDate: new Date(), 
+        paymentDate: new Date(),
       };
       const result = await paymentCollection.insertOne(paymentData);
       res.send(result);
