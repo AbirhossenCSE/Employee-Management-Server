@@ -87,7 +87,7 @@ async function run() {
       const users = await userCollection.find({ payable: true }).toArray();
       res.send(users);
     });
-    
+
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email });
@@ -386,6 +386,10 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/contact-us', async (req, res) => {
+      const result = await messagesCollection.find().toArray();
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
