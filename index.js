@@ -66,6 +66,18 @@ async function run() {
       // next();
     }
 
+    // use verify admin after verifyToken
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === 'admin';
+      if (!isAdmin) {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+      next();
+    }
+
     // users related Api
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -83,7 +95,7 @@ async function run() {
     })
 
     // admin payment
-    app.get("/users/payable", async (req, res) => {
+    app.get("/users/payable", verifyToken, verifyAdmin, async (req, res) => {
       const users = await userCollection.find({ payable: true }).toArray();
       res.send(users);
     });
@@ -98,7 +110,7 @@ async function run() {
     });
 
     // make admin
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
@@ -144,8 +156,8 @@ async function run() {
         res.status(400).send({ message: "Failed to update salary" });
       }
     });
-    
-    
+
+
 
     app.get("/employees/:id", async (req, res) => {
       const { id } = req.params;
@@ -195,7 +207,7 @@ async function run() {
     });
 
 
-    app.get("/payment-history", async (req, res) => {
+    app.get("/payment-history", verifyToken, verifyAdmin, async (req, res) => {
       const { email, page = 0, limit = 5 } = req.query;
       const pageNumber = parseInt(page);
       const limitNumber = parseInt(limit);
@@ -224,9 +236,6 @@ async function run() {
     });
 
 
-
-
-
     // get by user role
     app.get("/users/role/:email", async (req, res) => {
       const email = req.params.email;
@@ -243,7 +252,7 @@ async function run() {
       }
     });
 
-    app.get('/users/admin/:email', verifyToken, async (req, res) => {
+    app.get('/users/admin/:email', verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'unauthorised access' })
@@ -259,7 +268,7 @@ async function run() {
     })
 
     // Fire employee
-    app.patch('/users/fire/:id', async (req, res) => {
+    app.patch('/users/fire/:id', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
