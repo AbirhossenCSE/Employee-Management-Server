@@ -207,7 +207,7 @@ async function run() {
     });
 
 
-    app.get("/payment-history", verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/payment-history", async (req, res) => {
       const { email, page = 0, limit = 5 } = req.query;
       const pageNumber = parseInt(page);
       const limitNumber = parseInt(limit);
