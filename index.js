@@ -95,7 +95,7 @@ async function run() {
     })
 
     // admin payment
-    app.get("/users/payable", verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/users/payable", async (req, res) => {
       const users = await userCollection.find({ payable: true }).toArray();
       res.send(users);
     });
@@ -328,7 +328,7 @@ async function run() {
     });
 
 
-    // hr
+    // hr related
     app.patch("/users/verify/:id", async (req, res) => {
       const { id } = req.params;
       try {
