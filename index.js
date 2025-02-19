@@ -42,6 +42,7 @@ async function run() {
     const tasksCollection = client.db('employee-management').collection('tasks')
     const paymentCollection = client.db('employee-management').collection('payment')
     const newsletterCollection = client.db('employee-management').collection('newsletter');
+    const blogCollection = client.db('employee-management').collection('blogs');
 
 
     // jwt related API---- JWT-2
@@ -382,6 +383,11 @@ async function run() {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     })
+    // blog related API
+    app.get('/blogs', async (req, res) => {
+      const result = await blogCollection.find().toArray();
+      res.send(result);
+    })
 
     // contact us post
     app.post('/contact-us', async (req, res) => {
@@ -401,6 +407,7 @@ async function run() {
       res.send(result);
     })
 
+    // newsletter
     app.post('/newsletter', async (req, res) => {
       const { email } = req.body;
       
