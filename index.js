@@ -41,6 +41,7 @@ async function run() {
     const messagesCollection = client.db('employee-management').collection('messages')
     const tasksCollection = client.db('employee-management').collection('tasks')
     const paymentCollection = client.db('employee-management').collection('payment')
+    const newsletterCollection = client.db('employee-management').collection('newsletter');
 
 
     // jwt related API---- JWT-2
@@ -399,6 +400,34 @@ async function run() {
       const result = await messagesCollection.find().toArray();
       res.send(result);
     })
+
+    app.post('/newsletter', async (req, res) => {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).send({ message: 'Email is required.' });
+      }
+      
+      try {
+        const existingSubscriber = await newsletterCollection.findOne({ email });
+        if (existingSubscriber) {
+          return res.status(400).send({ message: 'Email is already subscribed.' });
+        }
+
+        const result = await newsletterCollection.insertOne({
+          email,
+          subscribedAt: new Date()
+        });
+        
+        res.status(201).send({
+          insertedId: result.insertedId,
+          message: 'Subscribed successfully!'
+        });
+      } catch (error) {
+        console.error('Error subscribing:', error);
+        res.status(500).send({ message: 'Server error. Please try again later.' });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
